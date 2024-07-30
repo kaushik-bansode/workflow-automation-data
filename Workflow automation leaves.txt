@@ -1,0 +1,108 @@
+
+if doc.custom_leave_recommendation:
+    # if not frappe.db.exists("Leave Recommendation-1", {"employee_id": doc.name}):
+    if not frappe.db.exists("Role", {"name": "Leave Recommendation - " + str(doc.name) + "-" + str(doc.custom_leave_recommendation)}):
+        role_rec_doc = frappe.new_doc("Role")
+        role_rec_doc.role_name = "Leave Recommendation - " + str(doc.name) + "-" + str(doc.custom_leave_recommendation)
+        role_rec_doc.insert()
+    
+        lr_doc = frappe.new_doc("Leave Recommendation-1")
+        lr_doc.employee_id = doc.name
+        # lr_doc.user_id = doc.custom_leave_recommendation
+        # lr_doc.user_name =  frappe.db.get_value("User",{"name":doc.custom_leave_recommendation},"full_name")
+        lr_doc.role = "Leave Recommendation - " + str(doc.name) + "-" + str(doc.custom_leave_recommendation)
+        username1 =  frappe.db.get_value("User",{"name":doc.custom_leave_recommendation},"full_name")
+        lr_doc.insert()
+        # "Leave Recommendation - " + str(doc.name)
+        user_doc = frappe.get_doc("User", doc.custom_leave_recommendation)
+        user_doc.append("roles", {
+            "role": "Leave Recommendation - " + str(doc.name) + "-" + str(doc.custom_leave_recommendation)
+        })
+        user_doc.save()
+    
+        workflow_doc = frappe.get_doc("Workflow", "Leave Approval")
+    
+        workflow_doc.append("transitions",{
+            "state": "Approval Pending For Leave Reccomendation",
+            "action": "Approve",
+            "next_state": "Approval Pending for Leave Approval",
+            "allowed": "Leave Recommendation - " + str(doc.name) + "-" + str(doc.custom_leave_recommendation),
+            "condition": f"doc.custom_leave_recommendation == \"{doc.custom_leave_recommendation}\""
+        })
+    
+        workflow_doc.append("transitions",{
+            "state": "Approval Pending For Leave Reccomendation",
+            "action": "Reject",
+            "next_state": "Rejected by Leave Recommendation",
+            "allowed": "Leave Recommendation - " + str(doc.name) + "-" + str(doc.custom_leave_recommendation),
+            "condition": f"doc.custom_leave_recommendation == \"{doc.custom_leave_recommendation}\""
+        })
+    
+        workflow_doc.save()
+        frappe.msgprint(f"<strong>{role_rec_doc.role_name} </strong>Role assigned to <strong>{username1}</strong>")
+    # else:
+    #     if not doc.leave_approver:
+    #         frappe.throw(f"Role already assigned to <strong>{doc.name} </strong> in Leave Recommendation")
+if doc.leave_approver:
+    # if not frappe.db.exists("Leave Approvals-1", {"employee_id": doc.name}):
+    if not frappe.db.exists("Role", {"name": "Leave Approval - " + str(doc.name) + "-" + str(doc.leave_approver)}):
+        role_apr_doc = frappe.new_doc("Role")
+        role_apr_doc.role_name = "Leave Approval - " + str(doc.name) + "-" + str(doc.leave_approver)
+        role_apr_doc.insert()
+       
+        la_doc = frappe.new_doc("Leave Approvals-1")
+        la_doc.employee_id = doc.name
+        # la_doc.user_id = doc.leave_approver
+        # la_doc.user_name = frappe.db.get_value("User",{"name":doc.leave_approver},"full_name")
+        la_doc.role = "Leave Approval - " + str(doc.name) + "-" + str(doc.leave_approver)
+        la_doc.insert()
+        username2 = frappe.db.get_value("User",{"name":doc.leave_approver},"full_name")
+        # "Leave Approval - " + str(doc.name)
+        user_doc1 = frappe.get_doc("User",doc.leave_approver)
+        user_doc1.append("roles", {
+            "role": "Leave Approval - " + str(doc.name) + "-" + str(doc.leave_approver)
+        })
+        user_doc1.save()
+        workflow_doc = frappe.get_doc("Workflow", "Leave Approval")
+    
+        workflow_doc.append("transitions",{
+            "state": "Approval Pending for Leave Approval",
+            "action": "Approve",
+            "next_state": "Approved",
+            "allowed": "Leave Approval - " + str(doc.name) + "-" + str(doc.leave_approver),
+            "condition": f"doc.leave_approver == \"{doc.leave_approver}\""
+        })
+    
+        workflow_doc.append("transitions",{
+            "state": "Approval Pending for Leave Approval",
+            "action": "Reject",
+            "next_state": "Rejected",
+            "allowed": "Leave Approval - " + str(doc.name) + "-" + str(doc.leave_approver),
+            "condition": f"doc.leave_approver == \"{doc.leave_approver}\""
+        })
+    
+        workflow_doc.save()
+        frappe.msgprint(f"<strong>{role_apr_doc.role_name} </strong> Role assigned to <strong>{username2}</strong>")
+    # else:
+    #     if not doc.custom_leave_recommendation:
+    #         frappe.throw(f"Role already assigned to <strong>{doc.name}</strong> in Leave Approval")
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
